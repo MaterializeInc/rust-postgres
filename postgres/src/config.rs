@@ -5,11 +5,11 @@
 use crate::connection::Connection;
 use crate::Client;
 use log::info;
+use std::fmt;
 use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
-use std::fmt;
 use tokio::runtime;
 #[doc(inline)]
 pub use tokio_postgres::config::{ChannelBinding, Host, SslMode, TargetSessionAttrs};
