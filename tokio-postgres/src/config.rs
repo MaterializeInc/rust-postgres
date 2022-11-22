@@ -64,7 +64,7 @@ pub enum ChannelBinding {
 }
 
 /// Replication mode configuration.
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ReplicationMode {
     /// Physical replication.

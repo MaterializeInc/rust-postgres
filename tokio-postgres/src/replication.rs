@@ -3,7 +3,7 @@
 use crate::copy_both::CopyBothDuplex;
 use crate::Error;
 use bytes::{BufMut, Bytes, BytesMut};
-use futures::{ready, SinkExt, Stream};
+use futures_util::{ready, SinkExt, Stream};
 use pin_project_lite::pin_project;
 use postgres_protocol::message::backend::LogicalReplicationMessage;
 use postgres_protocol::message::backend::ReplicationMessage;
