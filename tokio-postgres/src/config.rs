@@ -64,7 +64,12 @@ pub enum ChannelBinding {
 }
 
 /// Replication mode configuration.
-#[derive(Debug, Copy, Clone, PartialEq)]
+///
+/// It is recommended that you use a PostgreSQL server patch version
+/// of at least: 14.0, 13.2, 12.6, 11.11, 10.16, 9.6.21, or
+/// 9.5.25. Earlier patch levels have a bug that doesn't properly
+/// handle pipelined requests after streaming has stopped.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum ReplicationMode {
     /// Physical replication.
@@ -492,6 +497,11 @@ impl Config {
     }
 
     /// Set replication mode.
+    ///
+    /// It is recommended that you use a PostgreSQL server patch version
+    /// of at least: 14.0, 13.2, 12.6, 11.11, 10.16, 9.6.21, or
+    /// 9.5.25. Earlier patch levels have a bug that doesn't properly
+    /// handle pipelined requests after streaming has stopped.
     pub fn replication_mode(&mut self, replication_mode: ReplicationMode) -> &mut Config {
         self.replication_mode = Some(replication_mode);
         self
