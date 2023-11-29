@@ -195,6 +195,7 @@ pub struct Config {
     pub(crate) target_session_attrs: TargetSessionAttrs,
     pub(crate) channel_binding: ChannelBinding,
     pub(crate) replication_mode: Option<ReplicationMode>,
+    pub(crate) tls_verify_host: Option<String>,
 }
 
 impl Default for Config {
@@ -230,6 +231,7 @@ impl Config {
             target_session_attrs: TargetSessionAttrs::Any,
             channel_binding: ChannelBinding::Prefer,
             replication_mode: None,
+            tls_verify_host: None,
         }
     }
 
@@ -371,6 +373,19 @@ impl Config {
     /// Gets the hosts that have been added to the configuration with `host`.
     pub fn get_hosts(&self) -> &[Host] {
         &self.host
+    }
+
+    /// Sets the hostname used during TLS certificate verification, if enabled.
+    ///
+    /// This can be useful if you are connecting through an SSH tunnel.
+    pub fn tls_verify_host(&mut self, host: &str) -> &mut Config {
+        self.tls_verify_host = Some(host.to_string());
+        self
+    }
+
+    /// Gets the host that has been added to the configuration with `tls_verify_host`.
+    pub fn get_tls_verify_host(&self) -> Option<&str> {
+        self.tls_verify_host.as_deref()
     }
 
     /// Adds a Unix socket host to the configuration.

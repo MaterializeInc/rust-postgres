@@ -32,11 +32,12 @@ where
             .copied()
             .unwrap_or(5432);
 
-        let hostname = match host {
-            Host::Tcp(host) => host.as_str(),
+        let hostname = match (config.tls_verify_host.as_deref(), host) {
+            (Some(tls_verify_host), Host::Tcp(_)) => tls_verify_host,
+            (None, Host::Tcp(host)) => host.as_str(),
             // postgres doesn't support TLS over unix sockets, so the choice here doesn't matter
             #[cfg(unix)]
-            Host::Unix(_) => "",
+            (_, Host::Unix(_)) => "",
         };
 
         let tls = tls
