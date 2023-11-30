@@ -375,6 +375,11 @@ impl Config {
         &self.host
     }
 
+    /// Gets a mutable view of the hosts that have been added to the configuration with `host`.
+    pub fn get_hosts_mut(&mut self) -> &mut [Host] {
+        &mut self.host
+    }
+
     /// Sets the hostname used during TLS certificate verification, if enabled.
     ///
     /// This can be useful if you are connecting through an SSH tunnel.
