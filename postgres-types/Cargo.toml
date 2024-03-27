@@ -35,7 +35,7 @@ postgres-derive = { version = "0.4.2", optional = true, path = "../postgres-deri
 
 array-init = { version = "2", optional = true }
 bit-vec-06 = { version = "0.6", package = "bit-vec", optional = true }
-chrono-04 = { version = "0.4.16", package = "chrono", default-features = false, features = [
+chrono-04 = { version = "0.4.33", package = "chrono", default-features = false, features = [
     "clock",
 ], optional = true }
 cidr-02 = { version = "0.2", package = "cidr", optional = true }
