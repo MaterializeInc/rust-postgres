@@ -1160,7 +1160,7 @@ impl LogicalReplicationMessage {
 
 /// A row as it appears in the replication stream
 #[derive(Debug)]
-pub struct Tuple(Vec<TupleData>);
+pub struct Tuple(pub Vec<TupleData>);
 
 impl Tuple {
     #[inline]
@@ -1373,7 +1373,7 @@ pub struct RelationBody {
     namespace: Bytes,
     name: Bytes,
     replica_identity: ReplicaIdentity,
-    columns: Vec<Column>,
+    pub columns: Vec<Column>,
 }
 
 impl RelationBody {
@@ -1440,7 +1440,7 @@ impl TypeBody {
 #[derive(Debug)]
 pub struct InsertBody {
     rel_id: u32,
-    tuple: Tuple,
+    pub tuple: Tuple,
 }
 
 impl InsertBody {
@@ -1461,9 +1461,9 @@ impl InsertBody {
 #[derive(Debug)]
 pub struct UpdateBody {
     rel_id: u32,
-    old_tuple: Option<Tuple>,
-    key_tuple: Option<Tuple>,
-    new_tuple: Tuple,
+    pub old_tuple: Option<Tuple>,
+    pub key_tuple: Option<Tuple>,
+    pub new_tuple: Tuple,
 }
 
 impl UpdateBody {
@@ -1498,8 +1498,8 @@ impl UpdateBody {
 #[derive(Debug)]
 pub struct DeleteBody {
     rel_id: u32,
-    old_tuple: Option<Tuple>,
-    key_tuple: Option<Tuple>,
+    pub old_tuple: Option<Tuple>,
+    pub key_tuple: Option<Tuple>,
 }
 
 impl DeleteBody {
