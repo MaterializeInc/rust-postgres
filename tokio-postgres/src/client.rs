@@ -123,9 +123,9 @@ impl InnerClient {
     }
 
     pub fn start_copy_both(&self) -> Result<CopyBothHandles, Error> {
-        let (sender, receiver) = mpsc::channel(16);
-        let (stream_sender, stream_receiver) = mpsc::channel(16);
-        let (sink_sender, sink_receiver) = mpsc::channel(16);
+        let (sender, receiver) = mpsc::channel(128);
+        let (stream_sender, stream_receiver) = mpsc::channel(128);
+        let (sink_sender, sink_receiver) = mpsc::channel(128);
 
         let responses = Responses {
             receiver,
