@@ -44,8 +44,8 @@ pub struct Responses {
 }
 
 pub struct CopyBothHandles {
-    pub(crate) stream_receiver: mpsc::Receiver<Result<Message, Error>>,
-    pub(crate) sink_sender: mpsc::Sender<FrontendMessage>,
+    pub(crate) stream_receiver: tokio::sync::mpsc::Receiver<Result<Message, Error>>,
+    pub(crate) sink_sender: tokio::sync::mpsc::Sender<FrontendMessage>,
 }
 
 impl Responses {
@@ -124,8 +124,8 @@ impl InnerClient {
 
     pub fn start_copy_both(&self) -> Result<CopyBothHandles, Error> {
         let (sender, receiver) = mpsc::channel(16);
-        let (stream_sender, stream_receiver) = mpsc::channel(16);
-        let (sink_sender, sink_receiver) = mpsc::channel(16);
+        let (stream_sender, stream_receiver) = tokio::sync::mpsc::channel(16);
+        let (sink_sender, sink_receiver) = tokio::sync::mpsc::channel(16);
 
         let responses = Responses {
             receiver,
