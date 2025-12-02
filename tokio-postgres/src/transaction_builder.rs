@@ -1,6 +1,4 @@
-use postgres_protocol::message::frontend;
-
-use crate::{codec::FrontendMessage, connection::RequestMessages, Client, Error, Transaction};
+use crate::{Client, Error, Transaction};
 
 /// The isolation level of a database transaction.
 #[derive(Debug, Copy, Clone)]
@@ -113,20 +111,13 @@ impl<'a> TransactionBuilder<'a> {
             done: bool,
         }
 
-        impl<'a> Drop for RollbackIfNotDone<'a> {
+        impl Drop for RollbackIfNotDone<'_> {
             fn drop(&mut self) {
                 if self.done {
                     return;
                 }
 
-                let buf = self.client.inner().with_buf(|buf| {
-                    frontend::query("ROLLBACK", buf).unwrap();
-                    buf.split().freeze()
-                });
-                let _ = self
-                    .client
-                    .inner()
-                    .send(RequestMessages::Single(FrontendMessage::Raw(buf)));
+                self.client.__private_api_rollback(None);
             }
         }
 

@@ -3,9 +3,9 @@
 use crate::connection::ConnectionRef;
 use crate::{Error, Notification};
 use fallible_iterator::FallibleIterator;
-use futures_util::{ready, FutureExt};
+use futures_util::FutureExt;
 use std::pin::Pin;
-use std::task::Poll;
+use std::task::{ready, Poll};
 use std::time::Duration;
 use tokio::time::{self, Instant, Sleep};
 
@@ -77,7 +77,7 @@ pub struct Iter<'a> {
     connection: ConnectionRef<'a>,
 }
 
-impl<'a> FallibleIterator for Iter<'a> {
+impl FallibleIterator for Iter<'_> {
     type Item = Notification;
     type Error = Error;
 
@@ -100,7 +100,7 @@ pub struct BlockingIter<'a> {
     connection: ConnectionRef<'a>,
 }
 
-impl<'a> FallibleIterator for BlockingIter<'a> {
+impl FallibleIterator for BlockingIter<'_> {
     type Item = Notification;
     type Error = Error;
 
@@ -129,7 +129,7 @@ pub struct TimeoutIter<'a> {
     timeout: Duration,
 }
 
-impl<'a> FallibleIterator for TimeoutIter<'a> {
+impl FallibleIterator for TimeoutIter<'_> {
     type Item = Notification;
     type Error = Error;
 

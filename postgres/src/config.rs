@@ -1,5 +1,7 @@
 //! Connection configuration.
 
+#![allow(clippy::doc_overindented_list_items)]
+
 use crate::connection::Connection;
 use crate::Client;
 use log::info;
@@ -12,7 +14,7 @@ use std::time::Duration;
 use tokio::runtime;
 #[doc(inline)]
 pub use tokio_postgres::config::{
-    ChannelBinding, Host, LoadBalanceHosts, SslMode, TargetSessionAttrs,
+    ChannelBinding, Host, LoadBalanceHosts, SslMode, SslNegotiation, TargetSessionAttrs,
 };
 use tokio_postgres::error::DbError;
 use tokio_postgres::tls::{MakeTlsConnect, TlsConnect};
@@ -44,6 +46,9 @@ use tokio_postgres::{Error, Socket};
 ///     path to the directory containing Unix domain sockets. Otherwise, it is treated as a hostname. Multiple hosts
 ///     can be specified, separated by commas. Each host will be tried in turn when connecting. Required if connecting
 ///     with the `connect` method.
+/// * `sslnegotiation` - TLS negotiation method. If set to `direct`, the client will perform direct TLS handshake, this only works for PostgreSQL 17 and newer.
+///     Note that you will need to setup ALPN of TLS client configuration to `postgresql` when using direct TLS.
+///     If set to `postgres`, the default value, it follows original postgres wire protocol to perform the negotiation.
 /// * `hostaddr` - Numeric IP address of host to connect to. This should be in the standard IPv4 address format,
 ///     e.g., 172.28.40.9. If your machine supports IPv6, you can also use those addresses.
 ///     If this parameter is not specified, the value of `host` will be looked up to find the corresponding IP address,
@@ -93,7 +98,7 @@ use tokio_postgres::{Error, Socket};
 /// ```
 ///
 /// ```not_rust
-/// host=/var/lib/postgresql,localhost port=1234 user=postgres password='password with spaces'
+/// host=/var/run/postgresql,localhost port=1234 user=postgres password='password with spaces'
 /// ```
 ///
 /// ```not_rust
@@ -118,7 +123,7 @@ use tokio_postgres::{Error, Socket};
 /// ```
 ///
 /// ```not_rust
-/// postgresql://user:password@%2Fvar%2Flib%2Fpostgresql/mydb?connect_timeout=10
+/// postgresql://user:password@%2Fvar%2Frun%2Fpostgresql/mydb?connect_timeout=10
 /// ```
 ///
 /// ```not_rust
@@ -126,7 +131,7 @@ use tokio_postgres::{Error, Socket};
 /// ```
 ///
 /// ```not_rust
-/// postgresql:///mydb?user=user&host=/var/lib/postgresql
+/// postgresql:///mydb?user=user&host=/var/run/postgresql
 /// ```
 #[derive(Clone)]
 pub struct Config {
@@ -271,6 +276,17 @@ impl Config {
     /// Gets the SSL certificate authority (CA) certificate in PEM format.
     pub fn get_ssl_root_cert(&self) -> Option<&[u8]> {
         self.config.get_ssl_root_cert()
+    }
+
+    /// Sets the SSL negotiation method
+    pub fn ssl_negotiation(&mut self, ssl_negotiation: SslNegotiation) -> &mut Config {
+        self.config.ssl_negotiation(ssl_negotiation);
+        self
+    }
+
+    /// Gets the SSL negotiation method
+    pub fn get_ssl_negotiation(&self) -> SslNegotiation {
+        self.config.get_ssl_negotiation()
     }
 
     /// Adds a host to the configuration.

@@ -7,7 +7,7 @@ use crate::{Client, Connection, Error};
 use bytes::BytesMut;
 use fallible_iterator::FallibleIterator;
 use futures_channel::mpsc;
-use futures_util::{ready, Sink, SinkExt, Stream, TryStreamExt};
+use futures_util::{Sink, SinkExt, Stream, TryStreamExt};
 use postgres_protocol::authentication;
 use postgres_protocol::authentication::sasl;
 use postgres_protocol::authentication::sasl::ScramSha256;
@@ -17,7 +17,7 @@ use std::borrow::Cow;
 use std::collections::{HashMap, VecDeque};
 use std::io;
 use std::pin::Pin;
-use std::task::{Context, Poll};
+use std::task::{ready, Context, Poll};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio_util::codec::Framed;
 
@@ -89,7 +89,14 @@ where
     S: AsyncRead + AsyncWrite + Unpin,
     T: TlsConnect<S>,
 {
-    let stream = connect_tls(stream, config.ssl_mode, tls, has_hostname).await?;
+    let stream = connect_tls(
+        stream,
+        config.ssl_mode,
+        config.ssl_negotiation,
+        tls,
+        has_hostname,
+    )
+    .await?;
 
     let mut stream = StartupStream {
         inner: Framed::new(stream, PostgresCodec),
@@ -107,7 +114,13 @@ where
     let (process_id, secret_key, parameters) = read_info(&mut stream).await?;
 
     let (sender, receiver) = mpsc::unbounded();
-    let client = Client::new(sender, config.ssl_mode, process_id, secret_key);
+    let client = Client::new(
+        sender,
+        config.ssl_mode,
+        config.ssl_negotiation,
+        process_id,
+        secret_key,
+    );
     let connection = Connection::new(stream.inner, stream.delayed, parameters, receiver);
 
     Ok((client, connection))

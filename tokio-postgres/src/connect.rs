@@ -4,8 +4,10 @@ use crate::connect_raw::connect_raw;
 use crate::connect_socket::connect_socket;
 use crate::tls::MakeTlsConnect;
 use crate::{Client, Config, Connection, Error, SimpleQueryMessage, Socket};
-use futures_util::{future, pin_mut, Future, FutureExt, Stream};
+use futures_util::{FutureExt, Stream};
 use rand::seq::SliceRandom;
+use std::future::{self, Future};
+use std::pin::pin;
 use std::task::Poll;
 use std::{cmp, io};
 use tokio::net;
@@ -44,7 +46,7 @@ where
 
     let mut indices = (0..num_hosts).collect::<Vec<_>>();
     if config.load_balance_hosts == LoadBalanceHosts::Random {
-        indices.shuffle(&mut rand::thread_rng());
+        indices.shuffle(&mut rand::rng());
     }
 
     let mut error = None;
@@ -101,7 +103,7 @@ where
                 .collect::<Vec<_>>();
 
             if config.load_balance_hosts == LoadBalanceHosts::Random {
-                addrs.shuffle(&mut rand::thread_rng());
+                addrs.shuffle(&mut rand::rng());
             }
 
             let mut last_err = None;
@@ -161,18 +163,18 @@ where
     let (mut client, mut connection) = connect_raw(socket, tls, has_hostname, config).await?;
 
     if config.target_session_attrs != TargetSessionAttrs::Any {
-        let rows = client.simple_query_raw("SHOW transaction_read_only");
-        pin_mut!(rows);
+        let mut rows = pin!(client.simple_query_raw("SHOW transaction_read_only"));
 
-        let rows = future::poll_fn(|cx| {
-            if connection.poll_unpin(cx)?.is_ready() {
-                return Poll::Ready(Err(Error::closed()));
-            }
+        let mut rows = pin!(
+            future::poll_fn(|cx| {
+                if connection.poll_unpin(cx)?.is_ready() {
+                    return Poll::Ready(Err(Error::closed()));
+                }
 
-            rows.as_mut().poll(cx)
-        })
-        .await?;
-        pin_mut!(rows);
+                rows.as_mut().poll(cx)
+            })
+            .await?
+        );
 
         loop {
             let next = future::poll_fn(|cx| {

@@ -28,7 +28,7 @@ const SCRAM_DEFAULT_SALT_LEN: usize = 16;
 /// special characters that would require escaping in an SQL command.
 pub fn scram_sha_256(password: &[u8]) -> String {
     let mut salt: [u8; SCRAM_DEFAULT_SALT_LEN] = [0; SCRAM_DEFAULT_SALT_LEN];
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     rng.fill_bytes(&mut salt);
     scram_sha_256_salt(password, salt)
 }
@@ -70,7 +70,7 @@ pub(crate) fn scram_sha_256_salt(password: &[u8], salt: [u8; SCRAM_DEFAULT_SALT_
 
     // stored key
     let mut hash = Sha256::default();
-    hash.update(client_key.as_slice());
+    hash.update(client_key);
     let stored_key = hash.finalize_fixed();
 
     // server key
@@ -102,5 +102,5 @@ pub fn md5(password: &[u8], username: &str) -> String {
     let mut hash = Md5::new();
     hash.update(&salted_password);
     let digest = hash.finalize();
-    format!("md5{:x}", digest)
+    format!("md5{digest:x}")
 }

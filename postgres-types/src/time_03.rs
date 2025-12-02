@@ -1,6 +1,5 @@
 use bytes::BytesMut;
 use postgres_protocol::types;
-use std::convert::TryFrom;
 use std::error::Error;
 use time_03::{Date, Duration, OffsetDateTime, PrimitiveDateTime, Time, UtcOffset};
 
@@ -13,7 +12,9 @@ fn base() -> PrimitiveDateTime {
 impl<'a> FromSql<'a> for PrimitiveDateTime {
     fn from_sql(_: &Type, raw: &[u8]) -> Result<PrimitiveDateTime, Box<dyn Error + Sync + Send>> {
         let t = types::timestamp_from_sql(raw)?;
-        Ok(base() + Duration::microseconds(t))
+        Ok(base()
+            .checked_add(Duration::microseconds(t))
+            .ok_or("value too large to decode")?)
     }
 
     accepts!(TIMESTAMP);
@@ -62,7 +63,10 @@ impl ToSql for OffsetDateTime {
 impl<'a> FromSql<'a> for Date {
     fn from_sql(_: &Type, raw: &[u8]) -> Result<Date, Box<dyn Error + Sync + Send>> {
         let jd = types::date_from_sql(raw)?;
-        Ok(base().date() + Duration::days(i64::from(jd)))
+        Ok(base()
+            .date()
+            .checked_add(Duration::days(i64::from(jd)))
+            .ok_or("value too large to decode")?)
     }
 
     accepts!(DATE);
@@ -71,11 +75,9 @@ impl<'a> FromSql<'a> for Date {
 impl ToSql for Date {
     fn to_sql(&self, _: &Type, w: &mut BytesMut) -> Result<IsNull, Box<dyn Error + Sync + Send>> {
         let jd = (*self - base().date()).whole_days();
-        if jd > i64::from(i32::max_value()) || jd < i64::from(i32::min_value()) {
-            return Err("value too large to transmit".into());
-        }
+        let jd = i32::try_from(jd).map_err(|_| "value too large to transmit")?;
 
-        types::date_to_sql(jd as i32, w);
+        types::date_to_sql(jd, w);
         Ok(IsNull::No)
     }
 

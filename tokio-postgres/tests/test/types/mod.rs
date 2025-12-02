@@ -15,6 +15,10 @@ use bytes::BytesMut;
 
 #[cfg(feature = "with-bit-vec-0_6")]
 mod bit_vec_06;
+#[cfg(feature = "with-bit-vec-0_7")]
+mod bit_vec_07;
+#[cfg(feature = "with-bit-vec-0_8")]
+mod bit_vec_08;
 #[cfg(feature = "with-chrono-0_4")]
 mod chrono_04;
 #[cfg(feature = "with-eui48-1")]
@@ -23,6 +27,10 @@ mod eui48_1;
 mod geo_types_06;
 #[cfg(feature = "with-geo-types-0_7")]
 mod geo_types_07;
+#[cfg(feature = "with-jiff-0_1")]
+mod jiff_01;
+#[cfg(feature = "with-jiff-0_2")]
+mod jiff_02;
 #[cfg(feature = "with-serde_json-1")]
 mod serde_json_1;
 #[cfg(feature = "with-smol_str-01")]
@@ -45,14 +53,14 @@ where
 
     for (val, repr) in checks {
         let rows = client
-            .query(&*format!("SELECT {}::{}", repr, sql_type), &[])
+            .query(&*format!("SELECT {repr}::{sql_type}"), &[])
             .await
             .unwrap();
         let result = rows[0].get(0);
         assert_eq!(val, &result);
 
         let rows = client
-            .query(&*format!("SELECT $1::{}", sql_type), &[&val])
+            .query(&*format!("SELECT $1::{sql_type}"), &[&val])
             .await
             .unwrap();
         let result = rows[0].get(0);
@@ -387,7 +395,7 @@ where
     let client = connect("user=postgres").await;
 
     let stmt = client
-        .prepare(&format!("SELECT 'NaN'::{}", sql_type))
+        .prepare(&format!("SELECT 'NaN'::{sql_type}"))
         .await
         .unwrap();
     let rows = client.query(&stmt, &[]).await.unwrap();
@@ -507,7 +515,7 @@ async fn domain() {
         to_sql_checked!();
     }
 
-    impl<'a> FromSql<'a> for SessionId {
+    impl FromSql<'_> for SessionId {
         fn from_sql(ty: &Type, raw: &[u8]) -> result::Result<Self, Box<dyn Error + Sync + Send>> {
             Vec::<u8>::from_sql(ty, raw).map(SessionId)
         }

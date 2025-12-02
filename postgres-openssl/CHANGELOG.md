@@ -1,5 +1,18 @@
 # Change Log
 
+## v0.5.2 - 2025-09-25
+
+### Changed
+
+* Updated repository links to use `rust-postgres` organization.
+* Upgraded to Rust 2021 edition.
+
+## v0.5.1 - 2025-02-02
+
+### Added
+
+* Added `set_postgresql_alpn`.
+
 ## v0.5.0 - 2020-12-25
 
 ### Changed
