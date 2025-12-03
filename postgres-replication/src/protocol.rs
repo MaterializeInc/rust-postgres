@@ -12,6 +12,7 @@ pub const PRIMARY_KEEPALIVE_TAG: u8 = b'k';
 
 // logical replication message tags
 const BEGIN_TAG: u8 = b'B';
+const MESSAGE_TAG: u8 = b'M';
 const COMMIT_TAG: u8 = b'C';
 const ORIGIN_TAG: u8 = b'O';
 const RELATION_TAG: u8 = b'R';
@@ -165,7 +166,9 @@ impl PrimaryKeepAliveBody {
 pub enum LogicalReplicationMessage {
     /// A BEGIN statement
     Begin(BeginBody),
-    /// A BEGIN statement
+    /// A logical decoding message
+    Message(MessageBody),
+    /// A COMMIT statement
     Commit(CommitBody),
     /// An Origin replication message
     /// Note that there can be multiple Origin messages inside a single transaction.
@@ -198,6 +201,21 @@ impl LogicalReplicationMessage {
                 final_lsn: buf.read_u64::<BigEndian>()?,
                 timestamp: buf.read_i64::<BigEndian>()?,
                 xid: buf.read_u32::<BigEndian>()?,
+            }),
+            MESSAGE_TAG => Self::Message(MessageBody {
+                flags: buf.read_i8()?,
+                message_lsn: buf.read_u64::<BigEndian>()?,
+                prefix: buf.read_cstr()?,
+                content: match buf.read_i32::<BigEndian>()? {
+                    len if len > 0 => buf.read_buf(len as usize)?,
+                    0 => Bytes::new(),
+                    len => {
+                        return Err(io::Error::new(
+                            io::ErrorKind::InvalidInput,
+                            format!("unexpected message content length `{len}`"),
+                        ))
+                    }
+                },
             }),
             COMMIT_TAG => Self::Commit(CommitBody {
                 flags: buf.read_i8()?,
@@ -488,6 +506,41 @@ impl BeginBody {
     /// Xid of the transaction.
     pub fn xid(&self) -> u32 {
         self.xid
+    }
+}
+
+/// A logical decoding message
+#[derive(Debug)]
+pub struct MessageBody {
+    message_lsn: u64,
+    flags: i8,
+    prefix: Bytes,
+    content: Bytes,
+}
+
+impl MessageBody {
+    #[inline]
+    /// The LSN of the logical decoding message.
+    pub fn message_lsn(&self) -> Lsn {
+        self.message_lsn
+    }
+
+    #[inline]
+    /// Flags. Currently can be either 0 for no flags or 1 if the logical decoding message is transactional.
+    pub fn flags(&self) -> i8 {
+        self.flags
+    }
+
+    #[inline]
+    /// The prefix of the logical decoding message.
+    pub fn prefix(&self) -> io::Result<&str> {
+        get_str(&self.prefix)
+    }
+
+    #[inline]
+    /// The content of the logical decoding message.
+    pub fn content(&self) -> &Bytes {
+        &self.content
     }
 }
 
