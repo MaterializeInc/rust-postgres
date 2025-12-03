@@ -1,8 +1,8 @@
 use std::time::Duration;
-use tokio_postgres::config::{Config, TargetSessionAttrs};
+use tokio_postgres::config::{Config, SslNegotiation, TargetSessionAttrs};
 
 fn check(s: &str, config: &Config) {
-    assert_eq!(s.parse::<Config>().expect(s), *config, "`{}`", s);
+    assert_eq!(s.parse::<Config>().expect(s), *config, "`{s}`");
 }
 
 #[test]
@@ -41,6 +41,10 @@ fn settings() {
             .keepalives(false)
             .keepalives_idle(Duration::from_secs(30))
             .target_session_attrs(TargetSessionAttrs::ReadOnly),
+    );
+    check(
+        "sslnegotiation=direct",
+        Config::new().ssl_negotiation(SslNegotiation::Direct),
     );
 }
 

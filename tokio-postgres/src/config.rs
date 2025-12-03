@@ -1,5 +1,7 @@
 //! Connection configuration.
 
+#![allow(clippy::doc_overindented_list_items)]
+
 #[cfg(feature = "runtime")]
 use crate::connect::connect;
 use crate::connect_raw::connect_raw;
@@ -55,6 +57,20 @@ pub enum SslMode {
     VerifyCa,
     /// Require the use of TLS.
     VerifyFull,
+}
+
+/// TLS negotiation configuration
+///
+/// See more information at
+/// https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLNEGOTIATION
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
+#[non_exhaustive]
+pub enum SslNegotiation {
+    /// Use PostgreSQL SslRequest for Ssl negotiation
+    #[default]
+    Postgres,
+    /// Start Ssl handshake without negotiation, only works for PostgreSQL 17+
+    Direct,
 }
 
 /// Channel binding configuration.
@@ -135,6 +151,15 @@ pub enum Host {
 ///     path to the directory containing Unix domain sockets. Otherwise, it is treated as a hostname. Multiple hosts
 ///     can be specified, separated by commas. Each host will be tried in turn when connecting. Required if connecting
 ///     with the `connect` method.
+/// * `sslnegotiation` - TLS negotiation method. If set to `direct`, the client
+///     will perform direct TLS handshake, this only works for PostgreSQL 17 and
+///     newer.
+///     Note that you will need to setup ALPN of TLS client configuration to
+///     `postgresql` when using direct TLS. If you are using postgres_openssl
+///     as TLS backend, a `postgres_openssl::set_postgresql_alpn` helper is
+///     provided for that.
+///     If set to `postgres`, the default value, it follows original postgres
+///     wire protocol to perform the negotiation.
 /// * `hostaddr` - Numeric IP address of host to connect to. This should be in the standard IPv4 address format,
 ///     e.g., 172.28.40.9. If your machine supports IPv6, you can also use those addresses.
 ///     If this parameter is not specified, the value of `host` will be looked up to find the corresponding IP address,
@@ -184,7 +209,7 @@ pub enum Host {
 /// ```
 ///
 /// ```not_rust
-/// host=/var/lib/postgresql,localhost port=1234 user=postgres password='password with spaces'
+/// host=/var/run/postgresql,localhost port=1234 user=postgres password='password with spaces'
 /// ```
 ///
 /// ```not_rust
@@ -209,7 +234,7 @@ pub enum Host {
 /// ```
 ///
 /// ```not_rust
-/// postgresql://user:password@%2Fvar%2Flib%2Fpostgresql/mydb?connect_timeout=10
+/// postgresql://user:password@%2Fvar%2Frun%2Fpostgresql/mydb?connect_timeout=10
 /// ```
 ///
 /// ```not_rust
@@ -217,7 +242,7 @@ pub enum Host {
 /// ```
 ///
 /// ```not_rust
-/// postgresql:///mydb?user=user&host=/var/lib/postgresql
+/// postgresql:///mydb?user=user&host=/var/run/postgresql
 /// ```
 #[derive(Clone, PartialEq, Eq)]
 pub struct Config {
@@ -230,6 +255,7 @@ pub struct Config {
     pub(crate) ssl_key: Option<Vec<u8>>,
     pub(crate) ssl_mode: SslMode,
     pub(crate) ssl_root_cert: Option<Vec<u8>>,
+    pub(crate) ssl_negotiation: SslNegotiation,
     pub(crate) host: Vec<Host>,
     pub(crate) hostaddr: Vec<IpAddr>,
     pub(crate) port: Vec<u16>,
@@ -263,6 +289,7 @@ impl Config {
             ssl_key: None,
             ssl_mode: SslMode::Prefer,
             ssl_root_cert: None,
+            ssl_negotiation: SslNegotiation::Postgres,
             host: vec![],
             hostaddr: vec![],
             port: vec![],
@@ -399,6 +426,19 @@ impl Config {
     /// Gets the SSL certificate authority (CA) certificate in PEM format.
     pub fn get_ssl_root_cert(&self) -> Option<&[u8]> {
         self.ssl_root_cert.as_deref()
+    }
+
+    /// Sets the SSL negotiation method.
+    ///
+    /// Defaults to `postgres`.
+    pub fn ssl_negotiation(&mut self, ssl_negotiation: SslNegotiation) -> &mut Config {
+        self.ssl_negotiation = ssl_negotiation;
+        self
+    }
+
+    /// Gets the SSL negotiation method.
+    pub fn get_ssl_negotiation(&self) -> SslNegotiation {
+        self.ssl_negotiation
     }
 
     /// Adds a host to the configuration.
@@ -677,6 +717,18 @@ impl Config {
             "sslrootcert_inline" => {
                 self.ssl_root_cert(value.as_bytes());
             }
+            "sslnegotiation" => {
+                let mode = match value {
+                    "postgres" => SslNegotiation::Postgres,
+                    "direct" => SslNegotiation::Direct,
+                    _ => {
+                        return Err(Error::config_parse(Box::new(InvalidValue(
+                            "sslnegotiation",
+                        ))))
+                    }
+                };
+                self.ssl_negotiation(mode);
+            }
             "host" => {
                 for host in value.split(',') {
                     self.host(host);
@@ -886,6 +938,7 @@ impl fmt::Debug for Config {
             .field("target_session_attrs", &self.target_session_attrs)
             .field("channel_binding", &self.channel_binding)
             .field("replication", &self.replication_mode)
+            .field("load_balance_hosts", &self.load_balance_hosts)
             .finish()
     }
 }
@@ -961,10 +1014,8 @@ impl<'a> Parser<'a> {
         match self.it.next() {
             Some((_, c)) if c == target => Ok(()),
             Some((i, c)) => {
-                let m = format!(
-                    "unexpected character at byte {}: expected `{}` but got `{}`",
-                    i, target, c
-                );
+                let m =
+                    format!("unexpected character at byte {i}: expected `{target}` but got `{c}`");
                 Err(Error::config_parse(m.into()))
             }
             None => Err(Error::config_parse("unexpected EOF".into())),

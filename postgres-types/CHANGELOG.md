@@ -1,6 +1,41 @@
 # Change Log
 
-## Unreleased
+## v0.2.11 - 2025-10-08
+
+### Changed
+
+* Disabled default features of `jiff` v0.1 and v0.2.
+
+## v0.2.10 - 2025-09-25
+
+### Added
+
+* Added support for `jiff` v0.2.
+* Added support for `bit-vec` versions v0.7 and v0.8.
+* Added `Serialize` and `Deserialize` impls for `Json` type.
+
+### Changed
+
+* Updated GitHub repository links to `rust-postgres` organization.
+* Switched from `serde` to `serde_core` dependency.
+* Upgraded to Rust 2021 edition.
+* Improved `-Zminimal-versions` support.
+
+## v0.2.9 - 2025-02-02
+
+### Added
+
+* Added support for `cidr` 0.3 via the `with-cidr-0_3` feature.
+
+### Fixed
+
+* Fixed deserialization of out of bounds inputs to `time` 0.3 types to return an error rather than panic.
+
+## v0.2.8 - 2024-09-15
+
+### Added
+
+* Added support for `jiff` 0.1 via the `with-jiff-01` feature.
 
 ## v0.2.7 - 2024-07-21
 

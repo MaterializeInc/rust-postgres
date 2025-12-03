@@ -79,9 +79,9 @@ impl RowIndex for str {
     }
 }
 
-impl<'a, T> Sealed for &'a T where T: ?Sized + Sealed {}
+impl<T> Sealed for &T where T: ?Sized + Sealed {}
 
-impl<'a, T> RowIndex for &'a T
+impl<T> RowIndex for &T
 where
     T: ?Sized + RowIndex,
 {
@@ -182,6 +182,11 @@ impl Row {
         }
 
         FromSql::from_sql_nullable(ty, self.col_buffer(idx)).map_err(|e| Error::from_sql(e, idx))
+    }
+
+    /// Returns the raw size of the row in bytes.
+    pub fn raw_size_bytes(&self) -> usize {
+        self.body.buffer_bytes().len()
     }
 
     /// Get the raw bytes for the column at the given index.
