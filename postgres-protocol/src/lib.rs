@@ -17,6 +17,7 @@ use std::io;
 
 pub mod authentication;
 pub mod escape;
+mod hex;
 pub mod message;
 pub mod password;
 pub mod types;
@@ -74,4 +75,5 @@ macro_rules! from_usize {
 }
 
 from_usize!(i16);
+from_usize!(u16);
 from_usize!(i32);

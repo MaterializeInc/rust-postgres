@@ -1,5 +1,33 @@
 # Change Log
 
+## v0.6.12 - 2026-06-12
+
+### Fixed
+
+* Bound SCRAM iteration count to 100,000 to prevent DoS.
+* Error instead of panicking on out-of-bounds hstore key/value length.
+* Fix inverted character match in SCRAM error value parser.
+
+## v0.6.11 - 2026-03-30
+
+### Changed
+
+* Upgraded `hmac` to 0.13.
+* Upgraded `md-5` to 0.11.
+* Upgraded `sha2` to 0.11.
+* Upgraded `rand` to 0.10.
+* Upgraded to Rust edition 2024, minimum Rust version 1.85.
+
+## v0.6.10 - 2026-01-14
+
+### Added
+
+* Implemented `FallibleIterator::size_hint` for `Fields`.
+
+### Fixed
+
+* Increased bind parameter limit from `i16::MAX` to `u16::MAX`.
+
 ## v0.6.9 - 2025-09-25
 
 ### Changed
