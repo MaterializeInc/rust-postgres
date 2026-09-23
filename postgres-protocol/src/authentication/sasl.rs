@@ -20,10 +20,9 @@ const NONCE_LENGTH: usize = 24;
 /// The iteration count is sent by the server and drives a PBKDF2 loop, so an
 /// unbounded value lets a malicious or impersonating server force the client to
 /// perform an arbitrary number of HMAC operations before authentication even
-/// completes (a denial of service). 100_000 is ~24x the PostgreSQL default of
-/// 4096 and matches the default cap the PostgreSQL JDBC driver (pgjdbc) adopted
-/// for the same issue (CVE-2026-42198).
-const MAX_ITERATION_COUNT: u32 = 100_000;
+/// completes (a denial of service). Allow servers configured with up to
+/// 2_000_000 iterations while keeping authentication work bounded.
+const MAX_ITERATION_COUNT: u32 = 2_000_000;
 
 /// The identifier of the SCRAM-SHA-256 SASL authentication mechanism.
 pub const SCRAM_SHA_256: &str = "SCRAM-SHA-256";
@@ -503,15 +502,31 @@ mod test {
     }
 
     #[test]
+    fn iteration_count_limit_is_accepted() {
+        let nonce = "9IZ2O01zb9IgiIZ1WJ/zgpJB";
+        let server_first =
+            "r=9IZ2O01zb9IgiIZ1WJ/zgpJBjx/oIRLs02gGSHcw1KEty3eY,s=fs3IXBy7U7+IvVjZ,i=2000000";
+
+        let mut scram =
+            ScramSha256::new_inner(b"foobar", ChannelBinding::unsupported(), nonce.to_string());
+        scram.update(server_first.as_bytes()).unwrap();
+    }
+
+    #[test]
     fn excessive_iteration_count_is_rejected() {
         // a malicious server cannot force an unbounded PBKDF2 loop; the iteration
         // count is rejected before `hi()` runs.
         let nonce = "9IZ2O01zb9IgiIZ1WJ/zgpJB";
         let server_first =
-            "r=9IZ2O01zb9IgiIZ1WJ/zgpJBjx/oIRLs02gGSHcw1KEty3eY,s=fs3IXBy7U7+IvVjZ,i=1000000";
+            "r=9IZ2O01zb9IgiIZ1WJ/zgpJBjx/oIRLs02gGSHcw1KEty3eY,s=fs3IXBy7U7+IvVjZ,i=2000001";
 
         let mut scram =
             ScramSha256::new_inner(b"foobar", ChannelBinding::unsupported(), nonce.to_string());
-        assert!(scram.update(server_first.as_bytes()).is_err());
+        let err = scram.update(server_first.as_bytes()).unwrap_err();
+        assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
+        assert_eq!(
+            err.to_string(),
+            "SCRAM iteration count exceeds the maximum allowed"
+        );
     }
 }
