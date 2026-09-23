@@ -87,7 +87,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - run: docker compose up -d
-      - uses: dtolnay/rust-toolchain@1.81.0
+      - uses: dtolnay/rust-toolchain@stable
       - run: echo "version=$(rustc --version)" >> $GITHUB_OUTPUT
         id: rust-version
       - uses: actions/cache@v4
