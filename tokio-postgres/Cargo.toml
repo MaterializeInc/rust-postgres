@@ -44,7 +44,7 @@ with-uuid-0_8 = ["postgres-types/with-uuid-0_8"]
 with-uuid-1 = ["postgres-types/with-uuid-1"]
 with-time-0_2 = ["postgres-types/with-time-0_2"]
 with-time-0_3 = ["postgres-types/with-time-0_3"]
-js = ["postgres-protocol/js", "postgres-types/js"]
+js = ["postgres-protocol/js", "postgres-types/js", "getrandom/wasm_js"]
 
 [dependencies]
 async-trait = "0.1"
@@ -53,6 +53,7 @@ byteorder = "1.0"
 fallible-iterator = "0.2"
 futures-channel = { version = "0.3", features = ["sink"] }
 futures-util = { version = "0.3", default-features = false, features = ["sink"] }
+getrandom = { version = "0.3", optional = true }
 log = "0.4"
 parking_lot = "0.12"
 percent-encoding = "2.0"
