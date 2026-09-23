@@ -15,8 +15,10 @@ use crate::types::test_type;
 #[tokio::test]
 async fn test_primitive_date_time_params() {
     fn make_check(time: &str) -> (Option<PrimitiveDateTime>, &str) {
-        let format =
-            format_description::parse("'[year]-[month]-[day] [hour]:[minute]:[second]'").unwrap();
+        let format = format_description::parse_borrowed::<1>(
+            "'[year]-[month]-[day] [hour]:[minute]:[second]'",
+        )
+        .unwrap();
         (Some(PrimitiveDateTime::parse(time, &format).unwrap()), time)
     }
     test_type(
@@ -34,8 +36,10 @@ async fn test_primitive_date_time_params() {
 #[tokio::test]
 async fn test_with_special_primitive_date_time_params() {
     fn make_check(time: &str) -> (Timestamp<PrimitiveDateTime>, &str) {
-        let format =
-            format_description::parse("'[year]-[month]-[day] [hour]:[minute]:[second]'").unwrap();
+        let format = format_description::parse_borrowed::<1>(
+            "'[year]-[month]-[day] [hour]:[minute]:[second]'",
+        )
+        .unwrap();
         (
             Timestamp::Value(PrimitiveDateTime::parse(time, &format).unwrap()),
             time,
@@ -58,7 +62,7 @@ async fn test_with_special_primitive_date_time_params() {
 async fn test_offset_date_time_params() {
     fn make_check(time: &str) -> (Option<OffsetDateTime>, &str) {
         let format =
-            format_description::parse("'[year]-[month]-[day] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]'").unwrap();
+            format_description::parse_borrowed::<1>("'[year]-[month]-[day] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]'").unwrap();
         (Some(OffsetDateTime::parse(time, &format).unwrap()), time)
     }
     test_type(
@@ -77,7 +81,7 @@ async fn test_offset_date_time_params() {
 async fn test_with_special_offset_date_time_params() {
     fn make_check(time: &str) -> (Timestamp<OffsetDateTime>, &str) {
         let format =
-            format_description::parse("'[year]-[month]-[day] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]'").unwrap();
+            format_description::parse_borrowed::<1>("'[year]-[month]-[day] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]'").unwrap();
         (
             Timestamp::Value(OffsetDateTime::parse(time, &format).unwrap()),
             time,
@@ -99,7 +103,7 @@ async fn test_with_special_offset_date_time_params() {
 #[tokio::test]
 async fn test_date_params() {
     fn make_check(date: &str) -> (Option<time_03::Date>, &str) {
-        let format = format_description::parse("'[year]-[month]-[day]'").unwrap();
+        let format = format_description::parse_borrowed::<1>("'[year]-[month]-[day]'").unwrap();
         (Some(time_03::Date::parse(date, &format).unwrap()), date)
     }
     test_type(
@@ -117,7 +121,7 @@ async fn test_date_params() {
 #[tokio::test]
 async fn test_with_special_date_params() {
     fn make_check(date: &str) -> (Date<time_03::Date>, &str) {
-        let format = format_description::parse("'[year]-[month]-[day]'").unwrap();
+        let format = format_description::parse_borrowed::<1>("'[year]-[month]-[day]'").unwrap();
         (
             Date::Value(time_03::Date::parse(date, &format).unwrap()),
             date,
@@ -139,7 +143,7 @@ async fn test_with_special_date_params() {
 #[tokio::test]
 async fn test_time_params() {
     fn make_check(time: &str) -> (Option<time_03::Time>, &str) {
-        let format = format_description::parse("'[hour]:[minute]:[second]'").unwrap();
+        let format = format_description::parse_borrowed::<1>("'[hour]:[minute]:[second]'").unwrap();
         (Some(time_03::Time::parse(time, &format).unwrap()), time)
     }
     test_type(
