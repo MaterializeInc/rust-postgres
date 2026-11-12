@@ -1,8 +1,6 @@
 use postgres_types::to_sql_checked;
 use std::collections::HashMap;
 use std::error::Error;
-use std::f32;
-use std::f64;
 use std::fmt;
 use std::net::IpAddr;
 use std::result;
